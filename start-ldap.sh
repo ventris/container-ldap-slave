@@ -84,8 +84,8 @@ cat << _EOF_ > /tmp/modify_config
 dn: olcDatabase={1}mdb,cn=config
 changetype: modify
 replace: olcSyncrepl
-olcSyncrepl: rid=001
-  provider="ldaps://${MASTER}:636/"
+olcSyncrepl: rid=100
+  provider="ldap://${MASTER}"
   type=refreshAndPersist
   retry="5 10 60 +"
   searchbase="${BASE_DN}"
@@ -94,9 +94,11 @@ olcSyncrepl: rid=001
   tls_cacert=${CA}
   tls_cert=${CERTFILE}
   tls_key=${KEYFILE}
+  tls_reqcert=demand
+  starttls=yes
 -
 replace: olcUpdateRef
-olcUpdateRef: ldaps://${MASTER}
+olcUpdateRef: ldap://${MASTER}
 _EOF_
 ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/modify_config
 shred -zu /tmp/modify_config
@@ -114,4 +116,4 @@ pkill slapd
 su openldap -s /usr/sbin/slapindex
 
 # Start final slapd
-exec /usr/sbin/slapd -h "${PROTOCOLS:-ldaps:///} ldapi:///" -g openldap -u openldap -F /etc/ldap/slapd.d "-d${LOGLEVEL}"
+exec /usr/sbin/slapd -h "${PROTOCOLS:-ldap:///} ldapi:///" -g openldap -u openldap -F /etc/ldap/slapd.d "-d${LOGLEVEL}"

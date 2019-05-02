@@ -28,27 +28,18 @@ echo "Installing slapd configuration"
 /usr/sbin/slapd -h ldapi:/// -g openldap -u openldap -F /etc/ldap/slapd.d
 
 
-if [ ! -z "${KEYFILE:-}" ]; then
-  cat << _EOF_ >> /etc/ldap/slapd.d/cn=config.ldif
-	dn: cn=config
-	changetype: modify
-	add: olcTLSCACertificateFile
-	olcTLSCACertificateFile: ${CA:?}
-	-
-	add: olcTLSCertificateFile
-	olcTLSCertificateFile: ${CERTFILE:?}
-	-
-	add: olcTLSCertificateKeyFile
-	olcTLSCertificateKeyFile: ${KEYFILE:?}
+cat << _EOF_ >> /etc/ldap/slapd.d/cn=config.ldif
+dn: cn=config
+changetype: modify
+add: olcTLSCACertificateFile
+olcTLSCACertificateFile: ${CA:?}
+-
+add: olcTLSCertificateFile
+olcTLSCertificateFile: ${CERTFILE:?}
+-
+add: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: ${KEYFILE:?}
 _EOF_
-else
-	cat << _EOF_ >> /etc/ldap/ssl.ldif
-	dn: cn=config
-	changetype: modify
-	add: olcTLSCACertificateFile
-	olcTLSCACertificateFile: ${CA:?}
-_EOF_
-fi
 
 ldapmodify -c -Q -Y EXTERNAL -H ldapi:/// -f /etc/ldap/ssl.ldif
 

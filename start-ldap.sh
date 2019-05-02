@@ -28,7 +28,7 @@ echo "Installing slapd configuration"
 /usr/sbin/slapd -h ldapi:/// -g openldap -u openldap -F /etc/ldap/slapd.d
 
 
-cat << _EOF_ >> /etc/ldap/slapd.d/cn=config.ldif
+cat << _EOF_ >> /etc/ldap/ssl.ldif
 dn: cn=config
 changetype: modify
 add: olcTLSCACertificateFile

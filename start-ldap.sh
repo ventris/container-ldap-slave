@@ -103,6 +103,23 @@ _EOF_
 ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/modify_config
 shred -zu /tmp/modify_config
 
+cat << _EOF_ > /tmp/syncmod
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: syncprov.la
+_EOF_
+ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/syncmod
+
+cat << _EOF_ > /tmp/index
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: entryUUID,entryCSN eq
+_EOF_
+ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/index
+
+
 # Mark current contextCSN to know when replication has caught up
 ldapsearch -y /tmp/ldap.secret -x -D "${ADMIN_BIND:?}" -b "${BASE_DN}" \
   -H ldaps://${MASTER:?} -s base -LLL contextCSN \

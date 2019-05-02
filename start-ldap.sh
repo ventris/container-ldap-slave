@@ -43,6 +43,9 @@ _EOF_
 
 ldapmodify -c -Q -Y EXTERNAL -H ldapi:/// -f /etc/ldap/ssl.ldif
 
+shred -zu /etc/ldap/ssl.ldif
+
+
 pkill slapd
 
 /usr/sbin/slapd -h ldapi:/// -g openldap -u openldap -F /etc/ldap/slapd.d
@@ -89,12 +92,10 @@ olcSyncrepl: rid=100
   type=refreshAndPersist
   retry="5 10 60 +"
   searchbase="${BASE_DN}"
-  bindmethod=sasl
-  saslmech=EXTERNAL
+  binddn="${ADMIN_BIND:?}"
+  bindmethod=simple
+  credentials=${MASTERPW:?}
   tls_cacert=${CA}
-  tls_cert=${CERTFILE}
-  tls_key=${KEYFILE}
-  tls_reqcert=demand
   starttls=yes
 -
 replace: olcUpdateRef
@@ -102,23 +103,6 @@ olcUpdateRef: ldap://${MASTER}
 _EOF_
 ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/modify_config
 shred -zu /tmp/modify_config
-
-cat << _EOF_ > /tmp/syncmod
-dn: cn=module{0},cn=config
-changetype: modify
-add: olcModuleLoad
-olcModuleLoad: syncprov.la
-_EOF_
-ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/syncmod
-
-cat << _EOF_ > /tmp/index
-dn: olcDatabase={1}mdb,cn=config
-changetype: modify
-add: olcDbIndex
-olcDbIndex: entryUUID,entryCSN eq
-_EOF_
-ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/index
-
 
 # Mark current contextCSN to know when replication has caught up
 ldapsearch -y /tmp/ldap.secret -x -D "${ADMIN_BIND:?}" -b "${BASE_DN}" \
